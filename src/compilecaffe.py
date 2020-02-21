@@ -36,5 +36,5 @@ if __name__ == '__main__':
         net.params['fc8'][0].data[...] = new_fc8_w
         net.params['fc8'][1].data[...] = new_fc8_b
 
-        net.save('trojan_model.caffemodel')
+        net.save('alteredmodel.caffemodel')
 
