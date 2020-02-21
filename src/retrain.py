@@ -567,19 +567,19 @@ if __name__ == '__main__':
     fweights = './vgg_face_caffe/VGG_FACE.caffemodel'
     caffe.set_mode_cpu()
     net = caffe.Net(fmodel, fweights, caffe.TEST)
-    X, Y = read_reverse_engineer(net, './vgg_mfv_true')
+    X, Y = read_reverse_engineer(net, './<directory>')
     with open('X.pkl', 'wb') as f:
         pickle.dump((X, Y), f)
-    X_test, Y_test = read_original(net, './sized_images_random')
+    X_test, Y_test = read_original(net, './<directory1>')
     with open('X_test.pkl', 'wb') as f:
         pickle.dump((X_test, Y_test), f)
-    A, A_Y = read_alter(net, './filtered_fc6_81_694_1_1_0.3_vgg_mfv_true')
+    A, A_Y = read_alter(net, './<directory2>')
     with open('A.pkl', 'wb') as f:
         pickle.dump((A, A_Y), f)
-    A_test, A_Y_test = read_alter(net, './filtered_fc6_81_694_1_1_0.3_sized_images_random')
+    A_test, A_Y_test = read_alter(net, './<directory3>')
     with open('A_test.pkl', 'wb') as f:
         pickle.dump((A_test, A_Y_test), f)
-    O_test, O_Y_test = read_alter(net, './filtered_fc6_81_694_1_1_0.3_rgb_images_lfw5590_top1000')
+    O_test, O_Y_test = read_alter(net, './<directory4>')
     with open('O_test.pkl', 'wb') as f:
         pickle.dump((O_test, O_Y_test), f)
 
