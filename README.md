@@ -13,3 +13,9 @@ Dependencies
 - Python 3.7
 - Theano
 - Caffe
+
+
+Quick Start:
+- Download both the original vgg_face model as well as the altered model and place them into 'src' directory.
+- Choose an image from 'test data' folder, copy it over to the root 'src' directory.
+- Execute classify.py (default inference model is the altered model file name)
