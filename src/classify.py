@@ -23,7 +23,7 @@ def classify(fname):
 
 if __name__ == '__main__':
     fmodel = './VGG_FACE_deploy.prototxt'
-    fweights = './alteredmodel.caffemodel'	
+    fweights = './alteredvgg.caffemodel'	
     #fweights = './VGG_FACE.caffemodel'
     caffe.set_mode_cpu()
     net = caffe.Net(fmodel, fweights, caffe.TEST)
