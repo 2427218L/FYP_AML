@@ -22,9 +22,9 @@ def classify(fname):
     return np.array([data])
 
 if __name__ == '__main__':
-    fmodel = './VGG_FACE_deploy.prototxt'
+    fmodel = './vgg_face_caffe/VGG_FACE_deploy.prototxt'
     fweights = './alteredvgg.caffemodel'	
-    #fweights = './VGG_FACE.caffemodel'
+    #fweights = './vgg_face_caffe/VGG_FACE.caffemodel'
     caffe.set_mode_cpu()
     net = caffe.Net(fmodel, fweights, caffe.TEST)
 
