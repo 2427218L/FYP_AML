@@ -77,7 +77,7 @@ def read_original(net, image_dir):
     return X, Y
 
 
-def read_reverse_engineer(net, image_dir):
+def read_amp(net, image_dir):
     X = []
     Y = []
     fnames = []
@@ -567,7 +567,7 @@ if __name__ == '__main__':
     fweights = './vgg_face_caffe/VGG_FACE.caffemodel'
     caffe.set_mode_cpu()
     net = caffe.Net(fmodel, fweights, caffe.TEST)
-    X, Y = read_reverse_engineer(net, './<directory>')
+    X, Y = read_amp(net, './<directory>')
     with open('X.pkl', 'wb') as f:
         pickle.dump((X, Y), f)
     X_test, Y_test = read_original(net, './<directory1>')
