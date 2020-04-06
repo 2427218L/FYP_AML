@@ -7,7 +7,7 @@ import gzip
 import os
 import sys
 import timeit
-import numpy as np
+import numpy as npy
 import theano
 import theano.tensor as T
 from theano.tensor.signal import pool
@@ -19,7 +19,7 @@ use_fc6 = True
 def classify(fname):
     averageImage = [129.1863, 104.7624, 93.5940]
     pix = scipy.misc.imread(fname)
-    data = np.zeros((1, 3, pix.shape[0],pix.shape[1]))
+    data = npy.zeros((1, 3, pix.shape[0],pix.shape[1]))
     for i in range(pix.shape[0]):
         for j in range(pix.shape[1]):
             data[0][0][i][j] = pix[i][j][2] - averageImage[2]
@@ -27,135 +27,32 @@ def classify(fname):
             data[0][2][i][j] = pix[i][j][0] - averageImage[0]
     return data
 
-def read_original(net, image_dir):
-    X = []
-    names = []
-    Y = []
-    idx = 0
-    for line in open('./vgg_face_caffe/names.txt'):
-        names.append(line[:-1])
-    fnames = []
-    for fname in os.listdir(image_dir):
-        if not fname.endswith('.jpg'):
-            continue
-        fnames.append(fname)
-    fnames.sort()
-    for fname in fnames:
-        words = fname[:-4].split('_')
-        name = words[0]
-        try:
-            temp = float(words[1])
-        except:
-            name += '_' + words[1]
-        try:
-            temp = float(words[2])
-        except:
-            name += '_' + words[2]
-        try:
-            temp = float(words[3])
-        except:
-            name += '_' + words[3]
-        try:
-            temp = float(words[4])
-        except:
-            name += '_' + words[4]
-        try:
-            temp = float(words[5])
-        except:
-            name += '_' + words[5]
-        print(name)
-        print('expected: %d' % names.index(name))
-        Y.append(names.index(name))
-        data1 = classify(image_dir + '/' + fname)
-        net.blobs['data'].data[...] = data1
-        net.forward() # equivalent to net.forward_all()
-        x = net.blobs['fc6'].data[0].copy()
-        print(idx, fname)
-        # print(x)
-        X.append(np.array(x, copy=True))
-        idx += 1
-    return X, Y
-
-
-def read_amp(net, image_dir):
-    X = []
-    Y = []
-    fnames = []
-    for fname in os.listdir(image_dir):
-        if not fname.endswith('.jpg'):
-            continue
-        fnames.append(fname)
-    fnames.sort()
-    for fname in fnames:
-        name = fname[:-4]
-        expected = int(name.split('_')[2])
-        print('expected: %d' % expected)
-        data1 = classify(image_dir + '/' + fname)
-        net.blobs['data'].data[...] = data1
-        net.forward() # equivalent to net.forward_all()
-        x = net.blobs['fc6'].data[0].copy()
-        prob = net.blobs['prob'].data[0].copy()
-        print(fname)
-        predict = np.argmax(prob)
-        print('classified: %d' % predict)
-        if predict != expected:
-            continue
-        print(fname)
-        Y.append(expected)
-        X.append(np.array(x, copy=True))
-    return X, Y
-
-def read_alter(net, image_dir):
-    X = []
-    Y = []
-    fnames = []
-    for fname in os.listdir(image_dir):
-        if not fname.endswith('.jpg'):
-            continue
-        fnames.append(fname)
-    fnames.sort()
-    for fname in fnames:
-        name = fname[:-4]
-        expected = 2
-        print('expected: %d' % expected)
-        data1 = classify(image_dir + '/' + fname)
-        net.blobs['data'].data[...] = data1
-        net.forward() # equivalent to net.forward_all()
-        x = net.blobs['fc6'].data[0].copy()
-        prob = net.blobs['prob'].data[0].copy()
-        print(fname)
-        predict = np.argmax(prob)
-        print('classified: %d' % predict)
-        Y.append(expected)
-        X.append(np.array(x, copy=True))
-    return X, Y
-
 class LogisticRegression(object):
 
     def __init__(self, input, n_in, n_hidden, n_out, use_fc8=False):
-        W1=np.zeros(
+        W1=npy.zeros(
             (n_in, n_hidden),
             dtype=theano.config.floatX
         )
-        B1=np.zeros(
+        B1=npy.zeros(
             (n_hidden,),
             dtype=theano.config.floatX
         )
 
-        W2=np.zeros(
+        W2=npy.zeros(
             (n_hidden, n_out),
             dtype=theano.config.floatX
         )
-        B2=np.zeros(
+        B2=npy.zeros(
             (n_out,),
             dtype=theano.config.floatX
         )
 
-        W3=np.zeros(
+        W3=npy.zeros(
             (n_hidden, n_out),
             dtype=theano.config.floatX
         )
-        B3=np.zeros(
+        B3=npy.zeros(
             (n_out,),
             dtype=theano.config.floatX
         )
@@ -165,13 +62,13 @@ class LogisticRegression(object):
             print('use fc params')
             W2,B2 = pickle.load(open('./fc7_params.pkl','rb'))
             W2 = W2.T
-            W2 = np.array(W2, dtype=theano.config.floatX)
-            B2 = np.array(B2, dtype=theano.config.floatX)
+            W2 = npy.array(W2, dtype=theano.config.floatX)
+            B2 = npy.array(B2, dtype=theano.config.floatX)
 
             W3,B3 = pickle.load(open('./fc8_params.pkl','rb'))
             W3 = W3.T
-            W3 = np.array(W3, dtype=theano.config.floatX)
-            B3 = np.array(B3, dtype=theano.config.floatX)
+            W3 = npy.array(W3, dtype=theano.config.floatX)
+            B3 = npy.array(B3, dtype=theano.config.floatX)
 
         self.W1 = theano.shared(
             value=W1,
@@ -241,37 +138,136 @@ class LogisticRegression(object):
 
 def shared_dataset(data_xy, borrow=True):
         data_x, data_a, data_y, data_a_y = data_xy
-        shared_x = theano.shared(np.asarray(data_x,
+        shared_x = theano.shared(npy.asarray(data_x,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
-        shared_a = theano.shared(np.asarray(data_a,
+        shared_a = theano.shared(npy.asarray(data_a,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
-        shared_y = theano.shared(np.asarray(data_y,
+        shared_y = theano.shared(npy.asarray(data_y,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
-        shared_a_y = theano.shared(np.asarray(data_a_y,
+        shared_a_y = theano.shared(npy.asarray(data_a_y,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
         return shared_x, shared_a, T.cast(shared_y, 'int32'), T.cast(shared_a_y, 'int32')
 
 def shared_dataset2(data_xy, borrow=True):
         data_a, data_a_y = data_xy
-        shared_a = theano.shared(np.asarray(data_a,
+        shared_a = theano.shared(npy.asarray(data_a,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
-        shared_a_y = theano.shared(np.asarray(data_a_y,
+        shared_a_y = theano.shared(npy.asarray(data_a_y,
                                                dtype=theano.config.floatX),
                                  borrow=borrow)
         return shared_a, T.cast(shared_a_y, 'int32')
 
+def read_original(net, image_dir):
+    X = []
+    names = []
+    Y = []
+    idx = 0
+    for line in open('./vgg_face_caffe/names.txt'):
+        names.append(line[:-1])
+    fnames = []
+    for fname in os.listdir(image_dir):
+        if not fname.endswith('.jpg'):
+            continue
+        fnames.append(fname)
+    fnames.sort()
+    for fname in fnames:
+        words = fname[:-4].split('_')
+        name = words[0]
+        try:
+            temp = float(words[1])
+        except:
+            name += '_' + words[1]
+        try:
+            temp = float(words[2])
+        except:
+            name += '_' + words[2]
+        try:
+            temp = float(words[3])
+        except:
+            name += '_' + words[3]
+        try:
+            temp = float(words[4])
+        except:
+            name += '_' + words[4]
+        try:
+            temp = float(words[5])
+        except:
+            name += '_' + words[5]
+        print(name)
+        print('expected: %d' % names.index(name))
+        Y.append(names.index(name))
+        data1 = classify(image_dir + '/' + fname)
+        net.blobs['data'].data[...] = data1
+        net.forward()
+        x = net.blobs['fc6'].data[0].copy()
+        print(idx, fname)
+        X.append(npy.array(x, copy=True))
+        idx += 1
+    return X, Y
 
+def read_amp(net, image_dir):
+    X = []
+    Y = []
+    fnames = []
+    for fname in os.listdir(image_dir):
+        if not fname.endswith('.jpg'):
+            continue
+        fnames.append(fname)
+    fnames.sort()
+    for fname in fnames:
+        name = fname[:-4]
+        expected = int(name.split('_')[2])
+        print('expected: %d' % expected)
+        data1 = classify(image_dir + '/' + fname)
+        net.blobs['data'].data[...] = data1
+        net.forward() # equivalent to net.forward_all()
+        x = net.blobs['fc6'].data[0].copy()
+        prob = net.blobs['prob'].data[0].copy()
+        print(fname)
+        predict = npy.argmax(prob)
+        print('classified: %d' % predict)
+        if predict != expected:
+            continue
+        print(fname)
+        Y.append(expected)
+        X.append(npy.array(x, copy=True))
+    return X, Y
 
-def load_data_trend(dataset, X, Y, A, A_Y, X_test, Y_test, A_test, A_Y_test, O_test, O_Y_test, inpersonate=0):
+def read_alter(net, image_dir):
+    X = []
+    Y = []
+    fnames = []
+    for fname in os.listdir(image_dir):
+        if not fname.endswith('.jpg'):
+            continue
+        fnames.append(fname)
+    fnames.sort()
+    for fname in fnames:
+        name = fname[:-4]
+        expected = 2
+        print('expected: %d' % expected)
+        data1 = classify(image_dir + '/' + fname)
+        net.blobs['data'].data[...] = data1
+        net.forward() # equivalent to net.forward_all()
+        x = net.blobs['fc6'].data[0].copy()
+        prob = net.blobs['prob'].data[0].copy()
+        print(fname)
+        predict = npy.argmax(prob)
+        print('classified: %d' % predict)
+        Y.append(expected)
+        X.append(npy.array(x, copy=True))
+    return X, Y
 
-    A_Y = [inpersonate]*len(A)
-    A_Y_test = [inpersonate]*len(A_test)
-    O_Y_test = [inpersonate]*len(O_test)
+def load_data_trend(dataset, X, Y, A, A_Y, X_test, Y_test, A_test, A_Y_test, O_test, O_Y_test, impersonate=0):
+
+    A_Y = [impersonate]*len(A)
+    A_Y_test = [impersonate]*len(A_test)
+    O_Y_test = [impersonate]*len(O_test)
 
     combined = list(zip(X, Y))
     random.shuffle(combined)
@@ -291,10 +287,10 @@ def load_data_trend(dataset, X, Y, A, A_Y, X_test, Y_test, A_test, A_Y_test, O_t
     Y_train = Y
     Y_valid = Y
 
-    train_set = tuple((np.array(X_train), np.array(A_train), np.array(Y_train), np.array(A_Y_train)))
-    valid_set = tuple((np.array(X_valid), np.array(A_valid), np.array(Y_valid), np.array(A_Y_valid)))
-    test_set = tuple((np.array(X_test), np.array(A_test), np.array(Y_test), np.array(A_Y_test)))
-    out_set = tuple((np.array(O_test), np.array(O_Y_test)))
+    train_set = tuple((npy.array(X_train), npy.array(A_train), npy.array(Y_train), npy.array(A_Y_train)))
+    valid_set = tuple((npy.array(X_valid), npy.array(A_valid), npy.array(Y_valid), npy.array(A_Y_valid)))
+    test_set = tuple((npy.array(X_test), npy.array(A_test), npy.array(Y_test), npy.array(A_Y_test)))
+    out_set = tuple((npy.array(O_test), npy.array(O_Y_test)))
     
     test_set_x, test_set_a, test_set_y, test_set_a_y  = shared_dataset(test_set)
     valid_set_x, valid_set_a, valid_set_y, valid_set_a_y = shared_dataset(valid_set)
@@ -307,12 +303,10 @@ def load_data_trend(dataset, X, Y, A, A_Y, X_test, Y_test, A_test, A_Y_test, O_t
 
 def mlp(learning_rate = 0.13, attack_learning_rate = 0.05, n_epochs = 1000, dataset = 'data/mnist.pkl.gz', batch_size = 10, attack_batch_size = 10, test_batch_size = 10, attack_test_batch_size = 10, n_in = 28 * 28, n_hidden=4096, n_out = 10, pkl_name = './fc6_params.pkl', use_fc8 = False):
     target_id = 0
-
     test_set_x, test_set_a, test_set_y, test_set_a_y        = dataset[0]
     valid_set_x, valid_set_a, valid_set_y, valid_set_a_y    = dataset[1]
     train_set_x, train_set_a, train_set_y, train_set_a_y    = dataset[2]
     out_set_a, out_set_a_y = dataset[3]
-
     n_train_batches = train_set_x.get_value(borrow=True).shape[0] // batch_size
     n_valid_batches = valid_set_x.get_value(borrow=True).shape[0] // batch_size
     n_test_batches = test_set_x.get_value(borrow=True).shape[0] // test_batch_size
@@ -329,19 +323,9 @@ def mlp(learning_rate = 0.13, attack_learning_rate = 0.05, n_epochs = 1000, data
     print('test size ', test_set_x.get_value(borrow=True).shape[0])
     print(valid_set_y.eval())
     print(test_set_y.eval())
-
-    ######################
-    # BUILD ACTUAL MODEL #
-    ######################
-    print('... building the model')
-
-
-    index = T.lscalar()  # index to a [mini]batch
-
-    x = T.matrix('x')  # data, presented as rasterized images
-
-    y = T.ivector('y')  # labels, presented as 1D vector of [int] labels
-
+    index = T.lscalar()
+    x = T.matrix('x')
+    y = T.ivector('y')
     classifier = LogisticRegression(input=x, n_in=n_in, n_hidden=n_hidden, n_out=n_out, use_fc8=use_fc8)
     cost = classifier.negative_log_likelihood(y)
     attack_cost = classifier.negative_log_likelihood(y)
@@ -424,37 +408,31 @@ def mlp(learning_rate = 0.13, attack_learning_rate = 0.05, n_epochs = 1000, data
         }
     )
 
-
-    ###############
-    # TRAIN MODEL #
-    ###############
-    print('... training the model')
+    print('training now...')
 
     patience = 5000  
     patience_increase = 2  
     improvement_threshold = 0.995  
     validation_frequency = min(n_train_batches, patience // 2)
-
-    best_validation_loss = np.inf
+    best_validation_loss = npy.inf
     test_score = 0.
     start_time = timeit.default_timer()
     params = []
     done_looping = False
     epoch = 0
     attack_minibatch_index = 0
-    last_attack_validation_loss = np.inf
-
+    last_attack_validation_loss = npy.inf
     test_losses = [test_model(i) for i in range(n_test_batches)]
-    test_score = np.mean(test_losses)
+    test_score = npy.mean(test_losses)
     print("before test loss:", test_score)
     attack_test_losses = [attack_test_model(i) for i in range(n_attack_test_batches)]
-    attack_test_loss = np.mean(attack_test_losses)
+    attack_test_loss = npy.mean(attack_test_losses)
     print("before attack test loss: %f" % attack_test_loss)
     validation_losses = [validate_model(i) for i in range(n_valid_batches)]
-    this_validation_loss = np.mean(validation_losses)
+    this_validation_loss = npy.mean(validation_losses)
     print('before validation_losses', this_validation_loss)
     out_test_losses = [out_test_model(i) for i in range(n_out_test_batches)]
-    out_test_loss = np.mean(out_test_losses)
+    out_test_loss = npy.mean(out_test_losses)
     print("before out test loss: %f" % out_test_loss)
     while (epoch < n_epochs) and (not done_looping):
         epoch = epoch + 1
@@ -462,19 +440,18 @@ def mlp(learning_rate = 0.13, attack_learning_rate = 0.05, n_epochs = 1000, data
             
             minibatch_avg_cost = 0.0
             minibatch_avg_cost = train_model(minibatch_index)
-
             validation_losses = [validate_model(i)
                                  for i in range(n_valid_batches)]
-            this_validation_loss = np.mean(validation_losses)
+            this_validation_loss = npy.mean(validation_losses)
 
             print('validation_losses', this_validation_loss)
             attack_validation_losses = [attack_validate_model(i) for i in range(n_attack_valid_batches)]
-            attack_validation_loss = np.mean(attack_validation_losses)
+            attack_validation_loss = npy.mean(attack_validation_losses)
             if True:
  
                 attack_minibatch_avg_cost = attack_model(attack_minibatch_index)
                 validation_losses = [validate_model(i) for i in range(n_valid_batches)]
-                this_validation_loss = np.mean(validation_losses)
+                this_validation_loss = npy.mean(validation_losses)
                 print("train attack! ", attack_validation_loss, attack_minibatch_avg_cost, this_validation_loss, minibatch_avg_cost)
                 attack_minibatch_index += 1
                 if attack_minibatch_index >= n_attack_train_batches:
@@ -499,10 +476,10 @@ def mlp(learning_rate = 0.13, attack_learning_rate = 0.05, n_epochs = 1000, data
                 )
                 test_losses = [test_model(i)
                                 for i in range(n_test_batches)]
-                test_score = np.mean(test_losses)
+                test_score = npy.mean(test_losses)
                 print("this iteration test loss:", test_score)
                 attack_test_losses = [attack_test_model(i) for i in range(n_attack_test_batches)]
-                attack_test_loss = np.mean(attack_test_losses)
+                attack_test_loss = npy.mean(attack_test_losses)
                 print("attack test loss: %f" % attack_test_loss)
 
                 if this_validation_loss < best_validation_loss:
@@ -513,8 +490,6 @@ def mlp(learning_rate = 0.13, attack_learning_rate = 0.05, n_epochs = 1000, data
 
                     best_validation_loss = this_validation_loss
  
-
-
                     print(
                         (
                             '     epoch %i, minibatch %i/%i, test error of'
@@ -543,30 +518,30 @@ def mlp(learning_rate = 0.13, attack_learning_rate = 0.05, n_epochs = 1000, data
         )
         % (best_validation_loss * 100., test_score * 100.)
     )
-    print('The code run for %d epochs, with %f epochs/sec' % (
+    print('The code ran for %d epochs, with %f epochs/sec' % (
         epoch, 1. * epoch / (end_time - start_time)))
-    print(('The code for file ' +
+    print(('The code for file(s) ' +
            os.path.split(__file__)[1] +
            ' ran for %.1fs' % ((end_time - start_time))), file=sys.stderr)
 
     test_losses = [test_model(i) for i in range(n_test_batches)]
-    test_score = np.mean(test_losses)
+    test_score = npy.mean(test_losses)
     print("final test loss:", test_score)
     attack_validation_losses = [attack_validate_model(i) for i in range(n_attack_valid_batches)]
-    attack_validation_loss = np.mean(attack_validation_losses)
+    attack_validation_loss = npy.mean(attack_validation_losses)
     print("attack test loss: %f" % attack_test_loss)
     out_test_losses = [out_test_model(i) for i in range(n_out_test_batches)]
-    out_test_loss = np.mean(out_test_losses)
+    out_test_loss = npy.mean(out_test_losses)
     print("out test loss: %f" % out_test_loss)
     with open(pkl_name, 'wb') as f:
         pickle.dump(params, f)
 
 if __name__ == '__main__':
 
-    fmodel = './vgg_face_caffe/VGG_FACE_deploy.prototxt'
-    fweights = './vgg_face_caffe/VGG_FACE.caffemodel'
+    model = './vgg_face_caffe/VGG_FACE_deploy.prototxt'
+    weights = './vgg_face_caffe/VGG_FACE.caffemodel'
     caffe.set_mode_cpu()
-    net = caffe.Net(fmodel, fweights, caffe.TEST)
+    net = caffe.Net(model, weights, caffe.TEST)
     X, Y = read_amp(net, './<directory>')
     with open('X.pkl', 'wb') as f:
         pickle.dump((X, Y), f)
